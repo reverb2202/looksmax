@@ -13,19 +13,17 @@ const MODEL = 'gemini-3.6-flash';
 
 module.exports = async (req, res) => {
   if (req.method !== 'POST') {
-    res.status(405).json({
+    return res.status(405).json({
       error: 'Método não permitido.'
     });
-    return;
   }
 
   const apiKey = process.env.GEMINI_API_KEY;
 
   if (!apiKey) {
-    res.status(500).json({
-      error: 'GEMINI_API_KEY não configurada no servidor.'
+    return res.status(500).json({
+      error: 'GEMINI_API_KEY não configurada.'
     });
-    return;
   }
 
   try {
@@ -36,37 +34,35 @@ module.exports = async (req, res) => {
     const history = body.history;
 
     if (!message || typeof message !== 'string') {
-      res.status(400).json({
+      return res.status(400).json({
         error: 'Mensagem inválida.'
       });
-      return;
     }
 
     const input = [];
 
-    // Histórico da conversa
+    // Histórico
     if (Array.isArray(history)) {
       history.slice(-10).forEach((h) => {
         if (
-          !h ||
-          typeof h.content !== 'string' ||
-          (h.role !== 'user' && h.role !== 'assistant')
+          h &&
+          typeof h.content === 'string' &&
+          (h.role === 'user' || h.role === 'assistant')
         ) {
-          return;
+          input.push({
+            type:
+              h.role === 'assistant'
+                ? 'model_output'
+                : 'user_input',
+
+            content: [
+              {
+                type: 'text',
+                text: h.content
+              }
+            ]
+          });
         }
-
-        input.push({
-          type: h.role === 'assistant'
-            ? 'model_output'
-            : 'user_input',
-
-          content: [
-            {
-              type: 'text',
-              text: h.content
-            }
-          ]
-        });
       });
     }
 
@@ -75,7 +71,7 @@ module.exports = async (req, res) => {
 
     if (context) {
       pieces.push(
-        'Contexto da rotina do usuário hoje:\n' +
+        'Contexto do usuário:\n' +
         String(context)
       );
     }
@@ -93,7 +89,7 @@ module.exports = async (req, res) => {
       ]
     });
 
-    // Chamada para a Gemini Interactions API
+    // Chamada da API
     const apiResponse = await fetch(
       'https://generativelanguage.googleapis.com/v1beta/interactions',
       {
@@ -107,14 +103,7 @@ module.exports = async (req, res) => {
         body: JSON.stringify({
           model: MODEL,
           system_instruction: SYSTEM_PROMPT,
-
-          input: input,
-
-          tools: [
-            {
-              type: 'google_search'
-            }
-          ]
+          input: input
         })
       }
     );
@@ -122,46 +111,35 @@ module.exports = async (req, res) => {
     const data = await apiResponse.json();
 
     if (!apiResponse.ok) {
-      console.error('Erro da API Gemini:', data);
+      console.error(data);
 
-      const msg =
-        data &&
-        data.error &&
-        data.error.message
-          ? data.error.message
-          : 'Erro ao consultar a API do Gemini.';
-
-      res.status(502).json({
-        error: msg
+      return res.status(502).json({
+        error:
+          data?.error?.message ||
+          'Erro ao consultar o Gemini.'
       });
-
-      return;
     }
 
-    // Procura a resposta textual do modelo
     let reply = '';
 
     if (Array.isArray(data.steps)) {
       for (const step of data.steps) {
         if (
-          step &&
           step.type === 'model_output' &&
           Array.isArray(step.content)
         ) {
-          for (const content of step.content) {
+          for (const part of step.content) {
             if (
-              content &&
-              content.type === 'text' &&
-              typeof content.text === 'string'
+              part.type === 'text' &&
+              typeof part.text === 'string'
             ) {
-              reply += content.text;
+              reply += part.text;
             }
           }
         }
       }
     }
 
-    // Fallback caso a resposta venha em output_text
     if (
       !reply &&
       typeof data.output_text === 'string'
@@ -171,15 +149,15 @@ module.exports = async (req, res) => {
 
     reply = reply.trim();
 
-    res.status(200).json({
+    return res.status(200).json({
       reply: reply || 'Sem resposta.'
     });
 
   } catch (err) {
-    console.error('Erro no assistente:', err);
+    console.error(err);
 
-    res.status(500).json({
-      error: 'Erro interno ao consultar o assistente.'
+    return res.status(500).json({
+      error: 'Erro interno do servidor.'
     });
   }
 };
