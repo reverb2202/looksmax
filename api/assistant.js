@@ -13,7 +13,9 @@ const MODEL = 'gemini-3.6-flash';
 
 module.exports = async (req, res) => {
   if (req.method !== 'POST') {
-    res.status(405).json({ error: 'Método não permitido.' });
+    res.status(405).json({
+      error: 'Método não permitido.'
+    });
     return;
   }
 
@@ -40,54 +42,74 @@ module.exports = async (req, res) => {
       return;
     }
 
-    // Monta o histórico da conversa.
-    const historyParts = [];
+    const input = [];
 
+    // Histórico da conversa
     if (Array.isArray(history)) {
       history.slice(-10).forEach((h) => {
         if (
-          h &&
-          (h.role === 'user' || h.role === 'assistant') &&
-          typeof h.content === 'string'
+          !h ||
+          typeof h.content !== 'string' ||
+          (h.role !== 'user' && h.role !== 'assistant')
         ) {
-          historyParts.push({
-            type: h.role === 'assistant'
-              ? 'model_output'
-              : 'user_input',
-            content: h.content
-          });
+          return;
         }
+
+        input.push({
+          type: h.role === 'assistant'
+            ? 'model_output'
+            : 'user_input',
+
+          content: [
+            {
+              type: 'text',
+              text: h.content
+            }
+          ]
+        });
       });
     }
 
-    // Monta a mensagem atual.
+    // Mensagem atual
     const pieces = [];
 
     if (context) {
       pieces.push(
-        'Contexto da rotina do usuário hoje:\n' + context
+        'Contexto da rotina do usuário hoje:\n' +
+        String(context)
       );
     }
 
     pieces.push('Pergunta: ' + message);
 
-    historyParts.push({
+    input.push({
       type: 'user_input',
-      content: pieces.join('\n\n')
+
+      content: [
+        {
+          type: 'text',
+          text: pieces.join('\n\n')
+        }
+      ]
     });
 
+    // Chamada para a Gemini Interactions API
     const apiResponse = await fetch(
       'https://generativelanguage.googleapis.com/v1beta/interactions',
       {
         method: 'POST',
+
         headers: {
           'Content-Type': 'application/json',
           'x-goog-api-key': apiKey
         },
+
         body: JSON.stringify({
           model: MODEL,
           system_instruction: SYSTEM_PROMPT,
-          input: historyParts,
+
+          input: input,
+
           tools: [
             {
               type: 'google_search'
@@ -116,7 +138,7 @@ module.exports = async (req, res) => {
       return;
     }
 
-    // A Interactions API retorna a resposta final em steps.
+    // Procura a resposta textual do modelo
     let reply = '';
 
     if (Array.isArray(data.steps)) {
@@ -139,8 +161,11 @@ module.exports = async (req, res) => {
       }
     }
 
-    // Algumas respostas também podem disponibilizar output_text.
-    if (!reply && typeof data.output_text === 'string') {
+    // Fallback caso a resposta venha em output_text
+    if (
+      !reply &&
+      typeof data.output_text === 'string'
+    ) {
       reply = data.output_text;
     }
 
