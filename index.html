@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>looksmax</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0f1110;
+    --bg-raised:#171916;
+    --bg-input:#1c1f1b;
+    --border:#26291f4d;
+    --border:#282b25;
+    --border-strong:#3a3e34;
+    --text:#edeee7;
+    --text-dim:#9a9d90;
+    --text-faint:#6a6d62;
+    --accent:#a3cf9f;
+    --accent-dim:#7fb27c;
+    --danger:#b5675a;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  button, input{ font-family:inherit; }
+  #app{
+    max-width:480px;
+    margin:0 auto;
+    min-height:100vh;
+    padding-bottom:96px;
+    position:relative;
+  }
+  .topbar{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:20px 20px 4px;
+  }
+  .wordmark{
+    font-family:'Space Grotesk',sans-serif;
+    font-weight:600;
+    font-size:16px;
+    color:var(--text);
+  }
+  .topbar-date{ font-size:12px; color:var(--text-faint); text-transform:capitalize; }
+
+  main#main{ padding:8px 20px 20px; }
+
+  /* ---------- dashboard ---------- */
+  .dash-date{ font-size:13px; color:var(--text-dim); margin:12px 0 0; text-transform:capitalize; }
+  .dash-hero{ position:relative; width:190px; height:190px; margin:12px auto 4px; }
+  .dial{ position:absolute; inset:0; width:100%; height:100%; }
+  .tick{ stroke:var(--border-strong); stroke-width:6; stroke-linecap:round; transition:stroke .25s ease; }
+  .tick-on{ stroke:var(--accent); }
+  .dash-hero-text{
+    position:absolute; inset:0;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+  }
+  .dash-num{
+    font-family:'Space Grotesk',sans-serif; font-weight:600;
+    font-size:46px; line-height:1; color:var(--text);
+  }
+  .dash-num-of{ font-size:22px; color:var(--text-dim); font-weight:500; }
+  .dash-sub{ margin-top:6px; font-size:13px; color:var(--text-dim); }
+
+  .btn-primary{
+    display:block; width:100%; margin-top:24px; padding:14px;
+    background:var(--accent); color:#10130f; border:none; border-radius:9px;
+    font-size:15px; font-weight:600; cursor:pointer;
+    transition:transform .15s ease, background .15s ease;
+  }
+  .btn-primary:hover{ background:var(--accent-dim); }
+  .btn-primary:active{ transform:scale(.98); }
+
+  .dash-streak{ margin-top:30px; padding-top:22px; border-top:1px solid var(--border); }
+  .streak-num-wrap{ display:flex; align-items:baseline; gap:12px; margin-bottom:16px; }
+  .streak-num{ font-family:'Space Grotesk',sans-serif; font-weight:600; font-size:38px; color:var(--accent); line-height:1; }
+  .streak-label{ font-size:13px; color:var(--text-dim); max-width:210px; line-height:1.4; }
+  .strip{ display:flex; justify-content:space-between; gap:6px; }
+  .strip-day{ display:flex; flex-direction:column; align-items:center; gap:7px; flex:1; }
+  .strip-box{ width:100%; aspect-ratio:1; border-radius:5px; border:1.5px solid var(--border-strong); background:transparent; }
+  .strip-on{ background:var(--accent); border-color:var(--accent); }
+  .strip-today{ border-color:var(--text); }
+  .strip-label{ font-size:11px; color:var(--text-faint); }
+
+  /* ---------- checklist ---------- */
+  .checklist-head{ display:flex; justify-content:space-between; align-items:flex-start; margin:14px 0 22px; gap:12px; }
+  .checklist-head h1{ font-family:'Space Grotesk',sans-serif; font-size:23px; font-weight:600; margin:0 0 4px; }
+  .pct-badge{
+    font-family:'Space Grotesk',sans-serif; font-weight:600; font-size:19px; color:var(--accent);
+    background:var(--bg-raised); border:1px solid var(--border); border-radius:9px; padding:6px 13px;
+    flex-shrink:0;
+  }
+  .block{ margin-bottom:26px; }
+  .block-title{
+    font-size:14px; font-weight:600; color:var(--text-dim);
+    margin:0 0 10px; padding-bottom:8px; border-bottom:1px solid var(--border);
+  }
+  .rest-note{ font-size:13px; color:var(--text-faint); margin:0 0 10px; }
+  .task-list{ list-style:none; margin:0; padding:0; }
+  .task-item{ display:flex; align-items:center; gap:10px; padding:11px 0; border-bottom:1px solid var(--border); }
+  .task-item:last-child{ border-bottom:none; }
+  .task-check{ position:relative; display:inline-flex; cursor:pointer; flex-shrink:0; }
+  .task-check input{ position:absolute; opacity:0; width:22px; height:22px; margin:0; cursor:pointer; }
+  .checkmark{
+    width:22px; height:22px; border:1.5px solid var(--border-strong); border-radius:6px;
+    display:flex; align-items:center; justify-content:center; transition:all .15s ease;
+  }
+  .task-check input:checked + .checkmark{ background:var(--accent); border-color:var(--accent); }
+  .task-check input:checked + .checkmark::after{
+    content:''; width:6px; height:11px; border:solid #10130f; border-width:0 2px 2px 0;
+    transform:rotate(45deg) translate(-1px,-1px);
+  }
+  .task-check input:focus-visible + .checkmark{ outline:2px solid var(--accent); outline-offset:2px; }
+  .task-name{ flex:1; font-size:15px; color:var(--text); }
+  .task-item.is-done .task-name{ color:var(--text-faint); text-decoration:line-through; }
+  .task-time{ font-size:12px; color:var(--text-faint); font-variant-numeric:tabular-nums; min-width:38px; text-align:right; }
+  .icon-btn{
+    background:none; border:none; color:var(--text-faint); padding:5px; cursor:pointer;
+    display:flex; border-radius:6px; flex-shrink:0;
+  }
+  .icon-btn:hover{ color:var(--text); background:var(--bg-raised); }
+  .icon-btn svg{ width:16px; height:16px; }
+  .task-edit-input{
+    flex:1; background:var(--bg-input); border:1px solid var(--accent); border-radius:5px;
+    padding:5px 8px; color:var(--text); font-size:15px;
+  }
+  .add-task-form{ display:flex; gap:8px; margin-top:10px; }
+  .add-task-form input{
+    flex:1; background:var(--bg-input); border:1px solid var(--border); border-radius:7px;
+    padding:10px 11px; color:var(--text); font-size:14px;
+  }
+  .add-task-form input::placeholder{ color:var(--text-faint); }
+  .add-task-form input:focus{ outline:none; border-color:var(--accent); }
+  .icon-btn-add{ background:var(--bg-raised); border:1px solid var(--border); width:38px; justify-content:center; }
+  .icon-btn-add svg{ width:18px; height:18px; }
+
+  /* ---------- stub screens ---------- */
+  .stub{ padding-top:70px; }
+  .stub h1{ font-family:'Space Grotesk',sans-serif; font-size:22px; margin:0 0 10px; }
+  .stub p{ color:var(--text-dim); font-size:14px; line-height:1.6; max-width:300px; }
+
+  /* ---------- nav ---------- */
+  #nav{
+    position:fixed; bottom:0; left:0; right:0;
+    display:flex; background:var(--bg-raised); border-top:1px solid var(--border);
+    max-width:480px; margin:0 auto;
+    padding:6px 4px calc(6px + env(safe-area-inset-bottom));
+  }
+  .nav-btn{
+    flex:1; display:flex; flex-direction:column; align-items:center; gap:3px;
+    background:none; border:none; color:var(--text-faint); padding:8px 2px;
+    cursor:pointer; font-size:10.5px;
+  }
+  .nav-btn svg{ width:20px; height:20px; }
+  .nav-btn.active{ color:var(--accent); }
+
+  /* ---------- assistant ---------- */
+  .chat-intro{ margin-bottom:18px; }
+  .chat-intro h1{ font-family:'Space Grotesk',sans-serif; font-size:22px; margin:14px 0 8px; }
+  .chat-intro p{ color:var(--text-dim); font-size:13px; line-height:1.6; margin:0; }
+  .chat-messages{ display:flex; flex-direction:column; gap:10px; padding:6px 0 16px; }
+  .chat-msg{ max-width:85%; padding:10px 13px; border-radius:13px; font-size:14px; line-height:1.5; white-space:pre-wrap; }
+  .chat-user{ align-self:flex-end; background:var(--accent); color:#10130f; border-bottom-right-radius:4px; }
+  .chat-assistant{ align-self:flex-start; background:var(--bg-raised); border:1px solid var(--border); color:var(--text); border-bottom-left-radius:4px; }
+  .chat-assistant.chat-pending{ color:var(--text-faint); }
+  .chat-input-row{ display:flex; gap:8px; position:sticky; bottom:88px; background:var(--bg); padding-top:8px; }
+  .chat-input-row input{
+    flex:1; background:var(--bg-input); border:1px solid var(--border); border-radius:9px;
+    padding:11px 12px; color:var(--text); font-size:14px;
+  }
+  .chat-input-row input::placeholder{ color:var(--text-faint); }
+  .chat-input-row input:focus{ outline:none; border-color:var(--accent); }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ transition:none !important; }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="topbar">
+    <span class="wordmark">looksmax</span>
+    <span class="topbar-date" id="topbar-date"></span>
+  </div>
+  <main id="main"></main>
+  <nav id="nav">
+    <button class="nav-btn" data-tab="dashboard" aria-label="Início">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>
+      <span>Início</span>
+    </button>
+    <button class="nav-btn" data-tab="checklist" aria-label="Rotina">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 12l3 3 5-6"/></svg>
+      <span>Rotina</span>
+    </button>
+    <button class="nav-btn" data-tab="week" aria-label="Semana">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18"/><path d="M8 3v4"/><path d="M16 3v4"/></svg>
+      <span>Semana</span>
+    </button>
+    <button class="nav-btn" data-tab="photos" aria-label="Fotos">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-2h6l2 2h3v11H4z"/><circle cx="12" cy="13.5" r="3.5"/></svg>
+      <span>Fotos</span>
+    </button>
+    <button class="nav-btn" data-tab="stats" aria-label="Estatísticas">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10"/><path d="M12 20V4"/><path d="M20 20v-7"/></svg>
+      <span>Stats</span>
+    </button>
+    <button class="nav-btn" data-tab="assistant" aria-label="Assistente">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.4 8.4 0 0 1-3.8 7 8.5 8.5 0 0 1-9.4 0L3 21l2.5-4.8a8.4 8.4 0 0 1-.9-3.7 8.5 8.5 0 0 1 8.5-8.5h.4a8.5 8.5 0 0 1 8 8.5z"/></svg>
+      <span>Assistente</span>
+    </button>
+  </nav>
+</div>
+
+<script>
+(function(){
+  'use strict';
+
+  var STORAGE_TASKS = 'lm_tasks_v2';
+  var STORAGE_COMPLETIONS = 'lm_completions_v2';
+  var STORAGE_SEEDED = 'lm_seeded_v1';
+
+  var BLOCK_ORDER = ['Manhã','Suplementos','Sobrancelha','Treino','Pescoço & Fascia','Sauna','Noite','Domingo'];
+
+  var DEFAULT_TASKS = [
+    {block:'Manhã', name:'500ml de água'},
+    {block:'Manhã', name:'Lavar o rosto com água gelada (ou hypochlorous)'},
+    {block:'Manhã', name:'Hidratante'},
+    {block:'Manhã', name:'Protetor solar SPF 50+'},
+    {block:'Suplementos', name:'Colágeno 10g'},
+    {block:'Suplementos', name:'Ômega 3'},
+    {block:'Suplementos', name:'Vitamina D'},
+    {block:'Suplementos', name:'CDZSE Cimed'},
+    {block:'Suplementos', name:'Ashwagandha'},
+    {block:'Sobrancelha', name:'Minoxidil'},
+    {block:'Sobrancelha', name:'Óleo de rícino'},
+    {block:'Sobrancelha', name:'Derma stamp (2x na semana)'},
+    {block:'Treino', name:'Peito + Tríceps', days:[1]},
+    {block:'Treino', name:'Bíceps + Costas', days:[2]},
+    {block:'Treino', name:'Upper', days:[4]},
+    {block:'Treino', name:'Lower', days:[5]},
+    {block:'Sauna', name:'Sauna (1 dia sim, 1 dia não, conforme recuperação)'},
+    {block:'Pescoço & Fascia', name:'Chin tucks (3x12-15)'},
+    {block:'Pescoço & Fascia', name:'Neck curls (3x10-12, 3x na semana)'},
+    {block:'Pescoço & Fascia', name:'Fascia release 5-7min (pescoço lateral, base do crânio, maxilar, masseter)'},
+    {block:'Noite', name:'Lavar o rosto (água ou sabonete suave)'},
+    {block:'Noite', name:'Hidratante'},
+    {block:'Noite', name:'Minoxidil nas sobrancelhas'},
+    {block:'Noite', name:'Óleo de rícino nos cílios e sobrancelhas'},
+    {block:'Noite', name:'Magnésio'},
+    {block:'Domingo', name:'Fotos de progresso (frente + 2 perfis + ¾)', days:[0]}
+  ];
+
+  var ICON_EDIT = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>';
+  var ICON_TRASH = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"/><path d="M19 6l-1 14a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>';
+  var ICON_PLUS = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>';
+  var ICON_SEND = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg>';
+
+  function uid(){ return 't' + Date.now().toString(36) + Math.random().toString(36).slice(2,8); }
+
+  function loadSeededSet(){
+    try{
+      var raw = localStorage.getItem(STORAGE_SEEDED);
+      return raw ? JSON.parse(raw) : [];
+    }catch(e){ return []; }
+  }
+  function saveSeededSet(arr){
+    try{ localStorage.setItem(STORAGE_SEEDED, JSON.stringify(arr)); }
+    catch(e){ console.error('Erro ao salvar tarefas padrão já aplicadas', e); }
+  }
+
+  function loadTasks(){
+    try{
+      var raw = localStorage.getItem(STORAGE_TASKS);
+      var tasks = raw ? JSON.parse(raw) : [];
+      var seeded = loadSeededSet();
+      var seededSet = {};
+      seeded.forEach(function(k){ seededSet[k] = true; });
+      var maxOrder = tasks.reduce(function(m,t){ return Math.max(m, t.order||0); }, -1);
+      var changed = false;
+      DEFAULT_TASKS.forEach(function(dt){
+        var key = dt.block + '|' + dt.name;
+        if (!seededSet[key]){
+          maxOrder++;
+          tasks.push({id:uid(), block:dt.block, name:dt.name, order:maxOrder, days:dt.days||[]});
+          seeded.push(key);
+          changed = true;
+        }
+      });
+      if (changed){
+        localStorage.setItem(STORAGE_TASKS, JSON.stringify(tasks));
+        saveSeededSet(seeded);
+      }
+      return tasks;
+    }catch(e){ console.error('Erro ao carregar tarefas', e); return []; }
+  }
+  function saveTasks(tasks){
+    try{ localStorage.setItem(STORAGE_TASKS, JSON.stringify(tasks)); }
+    catch(e){ console.error('Erro ao salvar tarefas', e); }
+  }
+  function loadCompletions(){
+    try{
+      var raw = localStorage.getItem(STORAGE_COMPLETIONS);
+      return raw ? JSON.parse(raw) : {};
+    }catch(e){ console.error('Erro ao carregar progresso', e); return {}; }
+  }
+  function saveCompletions(c){
+    try{ localStorage.setItem(STORAGE_COMPLETIONS, JSON.stringify(c)); }
+    catch(e){ console.error('Erro ao salvar progresso', e); }
+  }
+
+  var STORAGE_CHAT = 'lm_chat_v1';
+  function loadChat(){
+    try{
+      var raw = localStorage.getItem(STORAGE_CHAT);
+      return raw ? JSON.parse(raw) : [];
+    }catch(e){ return []; }
+  }
+  function saveChat(c){
+    try{ localStorage.setItem(STORAGE_CHAT, JSON.stringify(c)); }
+    catch(e){ console.error('Erro ao salvar conversa', e); }
+  }
+
+  var state = {
+    tasks: loadTasks(),
+    completions: loadCompletions(),
+    chat: loadChat(),
+    tab: 'dashboard'
+  };
+  cleanupDuplicateTasks();
+
+  function cleanupDuplicateTasks(){
+    var groups = {};
+    state.tasks.forEach(function(t){
+      var key = t.block + '|' + t.name;
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(t);
+    });
+    var toRemove = {};
+    var anyDup = false;
+    Object.keys(groups).forEach(function(key){
+      var group = groups[key];
+      if (group.length <= 1) return;
+      anyDup = true;
+      var keeper = null;
+      group.forEach(function(t){
+        if (keeper) return;
+        var hasHistory = Object.keys(state.completions).some(function(dk){
+          return !!state.completions[dk][t.id];
+        });
+        if (hasHistory) keeper = t;
+      });
+      if (!keeper){
+        keeper = group.slice().sort(function(a,b){ return (a.order||0) - (b.order||0); })[0];
+      }
+      group.forEach(function(t){
+        if (t.id !== keeper.id) toRemove[t.id] = true;
+      });
+    });
+    if (anyDup){
+      state.tasks = state.tasks.filter(function(t){ return !toRemove[t.id]; });
+      saveTasks(state.tasks);
+      saveSeededSet(state.tasks.map(function(t){ return t.block + '|' + t.name; }));
+    }
+  }
+
+  function pad(n){ return n < 10 ? '0'+n : ''+n; }
+  function dateKey(d){ return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); }
+  function todayKey(){ return dateKey(new Date()); }
+  function dateFromKey(key){
+    var p = key.split('-').map(Number);
+    return new Date(p[0], p[1]-1, p[2]);
+  }
+  function taskAppliesToDate(t, date){
+    return !t.days || t.days.length === 0 || t.days.indexOf(date.getDay()) !== -1;
+  }
+
+  var WEEKDAYS_FULL = ['domingo','segunda-feira','terça-feira','quarta-feira','quinta-feira','sexta-feira','sábado'];
+  var WEEKDAYS_SHORT = ['D','S','T','Q','Q','S','S'];
+  var MONTHS = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+  var MONTHS_SHORT = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+
+  function formatFullDate(d){
+    return WEEKDAYS_FULL[d.getDay()] + ', ' + d.getDate() + ' de ' + MONTHS[d.getMonth()];
+  }
+  function formatShortDate(d){
+    return d.getDate() + ' ' + MONTHS_SHORT[d.getMonth()];
+  }
+
+  function dayStats(key){
+    var date = dateFromKey(key);
+    var applicable = state.tasks.filter(function(t){ return taskAppliesToDate(t, date); });
+    var total = applicable.length;
+    var comp = state.completions[key] || {};
+    var done = 0;
+    applicable.forEach(function(t){ if (comp[t.id]) done++; });
+    var pct = total > 0 ? Math.round(done/total*100) : 0;
+    return {done:done, total:total, pct:pct};
+  }
+
+  function computeStreak(){
+    var streak = 0;
+    var d = new Date();
+    var t = dayStats(dateKey(d));
+    if (t.total > 0 && t.pct === 100) streak++;
+    d.setDate(d.getDate()-1);
+    while(true){
+      var s = dayStats(dateKey(d));
+      if (s.total > 0 && s.pct === 100){ streak++; d.setDate(d.getDate()-1); }
+      else break;
+    }
+    return streak;
+  }
+
+  function toggleTask(taskId, key){
+    var comp = state.completions[key] || {};
+    if (comp[taskId]) delete comp[taskId];
+    else comp[taskId] = new Date().toISOString();
+    state.completions[key] = comp;
+    saveCompletions(state.completions);
+    render();
+  }
+  function addTask(block, name){
+    name = (name||'').trim();
+    if (!name) return;
+    var maxOrder = state.tasks.reduce(function(m,t){ return Math.max(m, t.order||0); }, -1);
+    state.tasks.push({id:uid(), block:block, name:name, order:maxOrder+1});
+    saveTasks(state.tasks);
+    render();
+  }
+  function editTask(taskId, newName){
+    newName = (newName||'').trim();
+    if (!newName) { render(); return; }
+    state.tasks = state.tasks.map(function(t){ if (t.id===taskId) t.name = newName; return t; });
+    saveTasks(state.tasks);
+    render();
+  }
+  function deleteTask(taskId){
+    state.tasks = state.tasks.filter(function(t){ return t.id !== taskId; });
+    saveTasks(state.tasks);
+    render();
+  }
+
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"]/g, function(c){
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];
+    });
+  }
+
+  // ---------- rendering ----------
+  var mainEl, navEl;
+
+  function buildDialSVG(done, total){
+    var n = Math.max(total, 1);
+    var cx=100, cy=100, r1=68, r2=87;
+    var startAngle=-135, sweep=270;
+    var lines = '';
+    for (var i=0;i<n;i++){
+      var angleDeg = n===1 ? startAngle+sweep/2 : startAngle + sweep*(i/(n-1));
+      var rad = angleDeg*Math.PI/180;
+      var x1 = cx + r1*Math.sin(rad);
+      var y1 = cy - r1*Math.cos(rad);
+      var x2 = cx + r2*Math.sin(rad);
+      var y2 = cy - r2*Math.cos(rad);
+      var cls = i < done ? 'tick tick-on' : 'tick';
+      lines += '<line x1="'+x1.toFixed(1)+'" y1="'+y1.toFixed(1)+'" x2="'+x2.toFixed(1)+'" y2="'+y2.toFixed(1)+'" class="'+cls+'"/>';
+    }
+    return '<svg viewBox="0 0 200 200" class="dial">'+lines+'</svg>';
+  }
+
+  function render(){
+    document.getElementById('topbar-date').textContent = formatShortDate(new Date());
+    renderNav();
+    if (state.tab === 'dashboard') renderDashboard();
+    else if (state.tab === 'checklist') renderChecklist();
+    else if (state.tab === 'assistant') renderAssistant();
+    else renderStub(state.tab);
+  }
+
+  function renderNav(){
+    navEl.querySelectorAll('.nav-btn').forEach(function(btn){
+      btn.classList.toggle('active', btn.getAttribute('data-tab') === state.tab);
+    });
+  }
+
+  function renderDashboard(){
+    var key = todayKey();
+    var stats = dayStats(key);
+    var streak = computeStreak();
+    var today = new Date();
+
+    var stripHtml = '';
+    for (var i=6;i>=0;i--){
+      var d = new Date();
+      d.setDate(d.getDate()-i);
+      var s = dayStats(dateKey(d));
+      var isToday = i===0;
+      var filled = s.total > 0 && s.pct === 100;
+      stripHtml += '<div class="strip-day">' +
+        '<div class="strip-box'+(filled?' strip-on':'')+(isToday?' strip-today':'')+'"></div>' +
+        '<span class="strip-label">'+WEEKDAYS_SHORT[d.getDay()]+'</span></div>';
+    }
+
+    mainEl.innerHTML =
+      '<p class="dash-date">'+formatFullDate(today)+'</p>' +
+      '<div class="dash-hero">' +
+        buildDialSVG(stats.done, stats.total) +
+        '<div class="dash-hero-text">' +
+          '<span class="dash-num">'+stats.done+'<span class="dash-num-of">/'+stats.total+'</span></span>' +
+          '<span class="dash-sub">'+stats.pct+'% concluído hoje</span>' +
+        '</div>' +
+      '</div>' +
+      '<button class="btn-primary" id="go-checklist">Ir para o checklist do dia</button>' +
+      '<div class="dash-streak">' +
+        '<div class="streak-num-wrap">' +
+          '<span class="streak-num">'+streak+'</span>' +
+          '<span class="streak-label">'+(streak===1?'dia seguido':'dias seguidos')+' com a rotina 100% completa</span>' +
+        '</div>' +
+        '<div class="strip">'+stripHtml+'</div>' +
+      '</div>';
+
+    document.getElementById('go-checklist').addEventListener('click', function(){
+      state.tab = 'checklist';
+      render();
+    });
+  }
+
+  function renderChecklist(){
+    var key = todayKey();
+    var stats = dayStats(key);
+    var today = new Date();
+    var comp = state.completions[key] || {};
+
+    var blocksPresent = BLOCK_ORDER.filter(function(b){
+      return state.tasks.some(function(t){ return t.block === b; });
+    });
+    state.tasks.forEach(function(t){
+      if (blocksPresent.indexOf(t.block) === -1) blocksPresent.push(t.block);
+    });
+
+    var html =
+      '<div class="checklist-head">' +
+        '<div><h1>Rotina de hoje</h1><p class="dash-date" style="margin-top:0">'+formatFullDate(today)+'</p></div>' +
+        '<div class="pct-badge">'+stats.pct+'%</div>' +
+      '</div>';
+
+    if (blocksPresent.length === 0){
+      html += '<div class="stub"><h1>Nenhuma tarefa ainda</h1><p>Crie blocos e tarefas conforme sua rotina evoluir.</p></div>';
+    }
+
+    blocksPresent.forEach(function(block){
+      var allBlockTasks = state.tasks.filter(function(t){ return t.block === block; });
+      var isScheduled = allBlockTasks.some(function(t){ return t.days && t.days.length > 0; });
+      var tasks = allBlockTasks
+        .filter(function(t){ return taskAppliesToDate(t, today); })
+        .sort(function(a,b){ return (a.order||0) - (b.order||0); });
+
+      html += '<div class="block"><h2 class="block-title">'+escapeHtml(block)+'</h2>';
+      if (tasks.length === 0 && isScheduled){
+        html += '<p class="rest-note">Nada agendado para hoje neste bloco.</p>';
+      }
+      html += '<ul class="task-list">';
+      tasks.forEach(function(t){
+        var isDone = !!comp[t.id];
+        var timeStr = '';
+        if (isDone){
+          var ts = new Date(comp[t.id]);
+          timeStr = pad(ts.getHours())+':'+pad(ts.getMinutes());
+        }
+        html += '<li class="task-item'+(isDone?' is-done':'')+'" data-id="'+t.id+'">' +
+          '<label class="task-check">' +
+            '<input type="checkbox" data-action="toggle" data-id="'+t.id+'" '+(isDone?'checked':'')+'/>' +
+            '<span class="checkmark"></span>' +
+          '</label>' +
+          '<span class="task-name" data-name>'+escapeHtml(t.name)+'</span>' +
+          '<span class="task-time">'+timeStr+'</span>' +
+          '<button class="icon-btn" data-action="edit" data-id="'+t.id+'" aria-label="Editar tarefa">'+ICON_EDIT+'</button>' +
+          '<button class="icon-btn" data-action="delete" data-id="'+t.id+'" aria-label="Excluir tarefa">'+ICON_TRASH+'</button>' +
+        '</li>';
+      });
+      html += '</ul>' +
+        '<form class="add-task-form" data-block="'+escapeHtml(block)+'">' +
+          '<input type="text" placeholder="Adicionar tarefa em '+escapeHtml(block)+'" data-add-input />' +
+          '<button type="submit" class="icon-btn icon-btn-add" aria-label="Adicionar tarefa">'+ICON_PLUS+'</button>' +
+        '</form>' +
+      '</div>';
+    });
+
+    mainEl.innerHTML = html;
+
+    mainEl.querySelectorAll('[data-action="toggle"]').forEach(function(el){
+      el.addEventListener('change', function(){ toggleTask(el.getAttribute('data-id'), key); });
+    });
+    mainEl.querySelectorAll('[data-action="delete"]').forEach(function(el){
+      el.addEventListener('click', function(){
+        if (window.confirm('Excluir esta tarefa? O histórico de dias anteriores não é afetado.')){
+          deleteTask(el.getAttribute('data-id'));
+        }
+      });
+    });
+    mainEl.querySelectorAll('[data-action="edit"]').forEach(function(el){
+      el.addEventListener('click', function(){ startEdit(el.getAttribute('data-id')); });
+    });
+    mainEl.querySelectorAll('.add-task-form').forEach(function(form){
+      form.addEventListener('submit', function(ev){
+        ev.preventDefault();
+        var input = form.querySelector('[data-add-input]');
+        addTask(form.getAttribute('data-block'), input.value);
+      });
+    });
+  }
+
+  function startEdit(taskId){
+    var li = mainEl.querySelector('.task-item[data-id="'+taskId+'"]');
+    if (!li) return;
+    var nameSpan = li.querySelector('[data-name]');
+    var currentName = nameSpan.textContent;
+    var input = document.createElement('input');
+    input.type = 'text';
+    input.value = currentName;
+    input.className = 'task-edit-input';
+    nameSpan.replaceWith(input);
+    input.focus();
+    input.select();
+    var committed = false;
+    function commit(){
+      if (committed) return;
+      committed = true;
+      editTask(taskId, input.value);
+    }
+    input.addEventListener('keydown', function(ev){
+      if (ev.key === 'Enter'){ ev.preventDefault(); commit(); }
+      if (ev.key === 'Escape'){ committed = true; render(); }
+    });
+    input.addEventListener('blur', commit);
+  }
+
+  function buildRoutineContext(){
+    var key = todayKey();
+    var today = new Date();
+    var comp = state.completions[key] || {};
+    var lines = [];
+    var blocksPresent = BLOCK_ORDER.filter(function(b){
+      return state.tasks.some(function(t){ return t.block === b; });
+    });
+    blocksPresent.forEach(function(block){
+      var tasks = state.tasks.filter(function(t){ return t.block === block && taskAppliesToDate(t, today); });
+      if (!tasks.length) return;
+      var done = [], pending = [];
+      tasks.forEach(function(t){ (comp[t.id] ? done : pending).push(t.name); });
+      lines.push(block + ' — feito: [' + done.join(', ') + '] pendente: [' + pending.join(', ') + ']');
+    });
+    var stats = dayStats(key);
+    lines.push('Progresso de hoje: ' + stats.done + '/' + stats.total + ' (' + stats.pct + '%)');
+    lines.push('Sequência atual: ' + computeStreak() + ' dia(s) com 100% seguidos');
+    return lines.join('\n');
+  }
+
+  function renderAssistant(){
+    var intro = '';
+    if (state.chat.length === 0){
+      intro = '<div class="chat-intro"><h1>Assistente</h1>' +
+        '<p>Pergunte sobre sua rotina, skincare, treino ou peça pra buscar algo atualizado. ' +
+        'Isso só responde de verdade quando o app está rodando com o backend próprio (veja o README do projeto) — ' +
+        'no link publicado do Claude essa aba fica só de exemplo.</p></div>';
+    }
+
+    var msgsHtml = state.chat.map(function(m){
+      var cls = m.role === 'user' ? 'chat-user' : 'chat-assistant' + (m.pending ? ' chat-pending' : '');
+      return '<div class="chat-msg ' + cls + '">' + escapeHtml(m.content) + '</div>';
+    }).join('');
+
+    mainEl.innerHTML = intro +
+      '<div class="chat-messages" id="chat-messages">' + msgsHtml + '</div>' +
+      '<form class="chat-input-row" id="chat-form">' +
+        '<input type="text" id="chat-input" placeholder="Pergunte algo..." autocomplete="off" />' +
+        '<button type="submit" class="icon-btn icon-btn-add" aria-label="Enviar">' + ICON_SEND + '</button>' +
+      '</form>';
+
+    var form = document.getElementById('chat-form');
+    form.addEventListener('submit', function(ev){
+      ev.preventDefault();
+      var input = document.getElementById('chat-input');
+      var text = input.value.trim();
+      if (!text) return;
+      input.value = '';
+      sendAssistantMessage(text);
+    });
+  }
+
+  function sendAssistantMessage(text){
+    state.chat.push({role:'user', content:text});
+    saveChat(state.chat);
+    state.chat.push({role:'assistant', content:'…', pending:true});
+    renderAssistant();
+
+    var context = buildRoutineContext();
+    var historyForApi = state.chat
+      .filter(function(m){ return !m.pending; })
+      .slice(-10)
+      .map(function(m){ return {role:m.role, content:m.content}; });
+
+    fetch('/api/assistant', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({message:text, context:context, history:historyForApi})
+    }).then(function(res){ return res.json().then(function(data){ return {ok:res.ok, data:data}; }); })
+      .then(function(result){
+        state.chat = state.chat.filter(function(m){ return !m.pending; });
+        var reply = result.ok ? (result.data.reply || 'Sem resposta.') : (result.data.error || 'Erro ao consultar o assistente.');
+        state.chat.push({role:'assistant', content: reply});
+        saveChat(state.chat);
+        renderAssistant();
+      })
+      .catch(function(){
+        state.chat = state.chat.filter(function(m){ return !m.pending; });
+        state.chat.push({role:'assistant', content:'Não consegui falar com o backend. Ele está no ar? Veja o README.'});
+        saveChat(state.chat);
+        renderAssistant();
+      });
+  }
+
+  function renderStub(tab){
+    var copy = {
+      week: ['Histórico semanal', 'Em breve: acompanhe cada dia da semana e feche o ciclo com o upload de fotos.'],
+      photos: ['Fotos', 'Em breve: envie fotos por ângulo e compare sua evolução semana a semana.'],
+      stats: ['Estatísticas', 'Em breve: consistência semanal, dias 100% e sua evolução visual, tudo em um só lugar.']
+    };
+    var c = copy[tab] || ['Em construção', ''];
+    mainEl.innerHTML = '<div class="stub"><h1>'+c[0]+'</h1><p>'+c[1]+'</p></div>';
+  }
+
+  document.addEventListener('DOMContentLoaded', function(){
+    mainEl = document.getElementById('main');
+    navEl = document.getElementById('nav');
+    navEl.querySelectorAll('[data-tab]').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        state.tab = btn.getAttribute('data-tab');
+        render();
+      });
+    });
+    render();
+  });
+})();
+</script>
+</body>
+</html>
