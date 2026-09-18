@@ -7,11 +7,7 @@ const SYSTEM_PROMPT =
   'autocuidado e melhoria física (skincare, treino, suplementação básica, ' +
   'postura, sono, grooming). Responda em português, de forma curta, direta ' +
   'e prática. Use o contexto da rotina do usuário (enviado abaixo) para dar ' +
-  'respostas específicas em vez de genéricas. Quando a pergunta envolver ' +
-  'risco à saúde (hormônios sem supervisão, práticas físicas perigosas, ' +
-  'medicamentos fora de bula, compostos não aprovados para uso humano), ' +
-  'seja honesto sobre os riscos, não forneça protocolos de dosagem, e ' +
-  'recomende um profissional de saúde.';
+  'respostas específicas em vez de genéricas.';
 
 const MODEL = 'gemini-3.6-flash';
 
